@@ -1,0 +1,458 @@
+- 👋 Hi, I’m @fanilari
+- 👀 I’m interested in ...
+- 🌱 I’m currently learning ...
+- 💞️ I’m looking to collaborate on ...
+- 📫 How to reach me ...
+
+<!---
+fanilari/fanilari is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+You can click threview link to take a look at your changes.
+--->
+import sqlite3
+
+from datetime import datetime
+
+# کلاس کاربر
+
+class User:
+
+    def __init__(self, name, last_name, father_name, birth_date, city, mobile, national_id, phone=None, user_id=None):
+
+        self.name = name
+
+        self.last_name = last_name
+
+        self.father_name = father_name
+
+        self.birth_date = birth_date
+
+        self.city = city
+
+        self.mobile = mobile
+
+        self.national_id = national_id
+
+        self.phone = phone
+
+        self.user_id = user_id
+
+    # نمایش جزئیات کاربر
+
+    def show_details(self):
+
+        print(f"Name: {self.name} {self.last_name}\nFather Name: {self.father_name}\nBirth Date: {self.birth_date}\nCity: {self.city}\nMobile: {self.mobile}\nNational ID: {self.national_id}")
+
+        if self.phone:
+
+            print(f"Phone: {self.phone}")
+
+# کلاس حساب
+
+class Account:
+
+    def __init__(self, user, account_type, account_id=None):
+
+        self.user = user
+
+        self.account_type = account_type
+
+        self.created_at = datetime.now()
+
+        self.balance = 0
+
+        self.account_id = account_id
+
+    # برداشت از حساب
+
+    def withdraw(self, amount):
+
+        if amount > self.balance:
+
+            print("Not enough balance")
+
+        else:
+
+            self.balance -= amount
+
+            print("Withdrawal successful")
+
+    # واریز به حساب
+
+    def deposit(self, amount):
+
+        self.balance += amount
+
+        print("Deposit successful")
+
+    # نمایش جزئیات حساب
+
+    def show_details(self):
+
+        print(f"Account Holder Name: {self.user.name} {self.user.last_name}\nAccount Type: {self.account_type}\nCreated At: {self.created_at}\nBalance: {self.balance}")
+
+# کلاس مدیر
+
+class Admin:
+
+    def __init__(self):
+
+        self.main()
+
+    def main(self):
+
+        print("1.show users")
+
+        print("2.show accounts")
+
+        user_input = input()
+
+        if user_input == '1':
+
+            self.show_users()
+
+        elif user_input == '2':
+
+            self.show_accounts()
+
+        else:
+
+            print("Unkown command")
+
+    # تایید نام کاربری و رمز عبور مدیر
+
+    def verify(self, username, password):
+
+        return self.username == username and self.password == password
+
+    def show_users(self):
+
+        Bank().users()
+
+    
+
+    def show_accounts(self):
+
+        Bank().accounts()
+
+# کلاس بانک
+
+class Bank:
+
+    def __init__(self):
+
+        self.users = []
+
+        self.accounts = []
+
+        self.admin = Admin()
+
+        self.mydb = sqlite3.connect('bank.db')
+
+        self.create_tables()
+
+    def create_tables(self):
+
+        try:
+
+            cursor = self.mydb.cursor()
+
+            cursor.execute('''CREATE TABLE IF NOT EXISTS users
+
+                            (user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                            name TEXT,
+
+                            last_name TEXT,
+
+                            father_name TEXT,
+
+                            birth_date TEXT,
+
+                            city TEXT,
+
+                            mobile TEXT,
+
+                            national_id TEXT,
+
+                            phone TEXT)''')
+
+            cursor.execute('''CREATE TABLE IF NOT EXISTS accounts
+
+                            (account_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                            user_id INTEGER,
+
+                            account_type TEXT,
+
+                            created_at TEXT,
+
+                            balance INTEGER,
+
+                            FOREIGN KEY(user_id) REFERENCES users(user_id))''')
+
+            self.mydb.commit()
+
+        except:
+
+            pass
+
+    # تعریف کاربر جدید و ذخیره در پایگاه داده
+
+    def create_user(self, name, last_name, father_name, birth_date, city, mobile, national_id, phone=None):
+
+        cursor = self.mydb.cursor()
+
+        sql = "INSERT INTO users (name, last_name, father_name, birth_date, city, mobile, national_id, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+
+        val = (name, last_name, father_name, birth_date, city, mobile, national_id, phone)
+
+        cursor.execute(sql, val)
+
+        self.mydb.commit()
+
+        user_id = cursor.lastrowid
+
+        user = User(name, last_name, father_name, birth_date, city, mobile, national_id, phone, user_id)
+
+        self.users.append(user)
+
+        return user
+
+    # تعریف حساب جدید و ذخیره در پایگاه داده
+
+    def create_account(self, user, account_type):
+
+        cursor = self.mydb.cursor()
+
+        sql = "INSERT INTO accounts (user_id, account_type,created_at, balance) VALUES (?, ?, ?, ?)"
+
+        val = (user.user_id, account_type, datetime.now(), 0)
+
+        cursor.execute(sql, val)
+
+        self.mydb.commit()
+
+        account_id = cursor.lastrowid
+
+        account = Account(user, account_type, account_id)
+
+        self.accounts.append(account)
+
+        return account
+
+    # جستجوی کاربر بر اساس کد ملی
+
+    def find_user_by_national_id(self, national_id):
+
+        for user in self.users:
+
+            if user.national_id == national_id:
+
+                return user
+
+        return None
+
+    # جستجوی حساب بر اساس شماره حساب
+
+    def find_account_by_id(self, account_id):
+
+        for account in self.accounts:
+
+            if account.account_id == account_id:
+
+                return account
+
+        return None
+
+    # ورود کاربر
+
+    def login(self):
+
+        national_id = input("Enter your national ID: ")
+
+        if national_id == 'admin':
+
+                a = Admin()
+
+        elif True:
+
+            user = self.find_user_by_national_id(national_id)
+
+            account_id = input("Enter your account ID: ")
+
+            account = self.find_account_by_id(int(account_id))
+
+            if account and account.user.user_id == user.user_id:
+
+                print("Login successful")
+
+                return account
+
+            else:
+
+                print("User not found")
+
+        else:
+
+            print("User not found")
+
+    # ثبت نام کاربر جدید
+
+    def register(self):
+
+        name = input("Enter your name: ")
+
+        last_name = input("Enter your last name: ")
+
+        father_name = input("Enter your father name: ")
+
+        birth_date = input("Enter your birth date (yyyy-mm-dd): ")
+
+        city = input("Enter your city: ")
+
+        mobile = input("Enter your mobile number: ")
+
+        national_id = input("Enter your national ID: ")
+
+        phone = input("Enter your phone number (optional): ")
+
+        user = self.create_user(name, last_name, father_name, birth_date, city, mobile, national_id, phone)
+
+        print("User created successfully")
+
+        print("Please create an account")
+
+        account_type = input("Enter account type: ")
+
+        account = self.create_account(user, account_type)
+
+        print("Account created successfully")
+
+        print("Your account ID is:", account.account_id)
+
+    # واریز به حساب
+
+    def deposit(self, account):
+
+        amount = int(input("Enter amount to deposit: "))
+
+        account.deposit(amount)
+
+        cursor = self.mydb.cursor()
+
+        sql = "UPDATE accounts SET balance = ? WHERE account_id = ?"
+
+        val = (account.balance, account.account_id)
+
+        cursor.execute(sql, val)
+
+        self.mydb.commit()
+
+    # برداشت از حساب
+
+    def withdraw(self, account):
+
+        amount = int(input("Enter amount to withdraw: "))
+
+        account.withdraw(amount)
+
+        cursor = self.mydb.cursor()
+
+        sql = "UPDATE accounts SET balance = ? WHERE account_id = ?"
+
+        val = (account.balance, account.account_id)
+
+        cursor.execute(sql, val)
+
+        self.mydb.commit()
+
+    # نمایش جزئیات حساب
+
+    def show_account_details(self, account):
+
+        account.show_details()
+
+    # نمایش جزئیات کاربر
+
+    def show_user_details(self, user):
+
+        user.show_details()
+
+    # شروع برنامه
+
+    def start(self):
+
+        while True:
+
+            print("\nWelcome to our bank")
+
+            print("1. Login")
+
+            print("2. Register")
+
+            print("3. Exit")
+
+            choice = input("Enter your choice: ")
+
+            if choice == "1":
+
+                account = self.login()
+
+                if account:
+
+                    while True:
+
+                        print("\n1. Deposit")
+
+                        print("2. Withdraw")
+
+                        print("3. Show Account Details")
+
+                        print("4. Show User Details")
+
+                        print("5. Logout")
+
+                        choice = input("Enter your choice: ")
+
+                        if choice == "1":
+
+                            self.deposit(account)
+
+                        elif choice == "2":
+
+                            self.withdraw(account)
+
+                        elif choice == "3":
+
+                            self.show_account_details(account)
+
+                        elif choice == "4":
+
+                            self.show_user_details(account.user)
+
+                        elif choice == "5":
+
+                            break
+
+                        else:
+
+                            print("Invalid choice")
+
+            elif choice == "2":
+
+                self.register()
+
+            elif choice == "3":
+
+                break
+
+            else:
+
+                print("Invalid choice")
+
+if __name__ == "__main__":
+
+    bank = Bank()
+
+    bank.start()
+
